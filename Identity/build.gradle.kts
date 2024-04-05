@@ -1,3 +1,6 @@
+import java.io.FileInputStream
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.androidLibrary)
     alias(libs.plugins.jetbrainsKotlinAndroid)
@@ -22,8 +25,10 @@ publishing {
             name = "Identity"
             url = uri("https://maven.pkg.github.com/indice-co/Indice.Identity.Android")
             credentials {
-                username = "{GIT_NAME}"
-                password = "{TOKEN}"
+                val props = Properties()
+                props.load(FileInputStream(file("config/github.properties")))
+                username = props.getProperty("GITHUB_USER_NAME")
+                password = props.getProperty("GITHUB_TOKEN")
             }
         }
     }
