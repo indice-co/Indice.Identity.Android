@@ -2,14 +2,15 @@ plugins {
     alias(libs.plugins.androidLibrary)
     alias(libs.plugins.jetbrainsKotlinAndroid)
     `maven-publish`
+    signing
 }
 
 publishing {
     publications {
         register<MavenPublication>("release") {
-            groupId = "gr.indice.identity"
+            groupId = "gr.indice"
             artifactId = "identity"
-            version = "1.0.0"
+            version = "0.0.1"
 
             afterEvaluate {
                 from(components["release"])
@@ -19,10 +20,10 @@ publishing {
     repositories {
         maven {
             name = "Identity"
-            //url = uri("https://maven.pkg.github.com/{GIT_USER}/{GIT_REPO}")
+            url = uri("https://maven.pkg.github.com/indice-co/Indice.Identity.Android")
             credentials {
-                username = "{GIT_USER}"
-                password = "{GIT_TOKEN}"
+                username = "{GIT_NAME}"
+                password = "{TOKEN}"
             }
         }
     }
