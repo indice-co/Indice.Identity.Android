@@ -45,7 +45,6 @@ object CryptoUtils {
     private fun KeyStore.delete(keyType: KeyType) {
         if (this.containsAlias(keyType.keyName())) {
             this.deleteEntry(keyType.keyName())
-            println("Delete Key = ${keyType.name}")
         }
     }
 
@@ -108,7 +107,6 @@ object CryptoUtils {
         val keyGenerator = KeyPairGenerator.getInstance(KEY_ALGORITHM, STORE_NAME)
         keyGenerator.initialize(keySpec)
         keyGenerator.generateKeyPair()
-        println("Create Key = ${keyType.name}")
     }
 
     fun createPinHash(pin: String, deviceId: String): String {
