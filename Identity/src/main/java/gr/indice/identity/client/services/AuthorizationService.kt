@@ -56,9 +56,9 @@ interface AuthorizationService {
     @Throws(ServiceErrorException::class)
     suspend fun revokeTokens()
     /** Generate the url used to initiate a authorization_code flow  */
-    suspend fun authorizationUrl(pkce: PKCE, andPrompt: String = "login"): Uri
+    fun authorizationUrl(pkce: PKCE, andPrompt: String = "login"): Uri
     /** Generate the url used to end a user's session  */
-    suspend fun endSessionUrl(): Uri
+    fun endSessionUrl(): Uri
 
 }
 
@@ -167,7 +167,7 @@ internal class AuthorizationServiceImpl(
         }
     }
 
-    override suspend fun authorizationUrl(pkce: PKCE, andPrompt: String): Uri {
+    override fun authorizationUrl(pkce: PKCE, andPrompt: String): Uri {
         if (configuration.authorizationEndPoint.isEmpty())
             throw Exception("Authorization endpoint url is invalid")
 
@@ -186,7 +186,7 @@ internal class AuthorizationServiceImpl(
 
     }
 
-    override suspend fun endSessionUrl(): Uri {
+    override fun endSessionUrl(): Uri {
         if (configuration.authorizationEndPoint.isEmpty())
             throw Exception("Authorization endpoint url is invalid")
 

@@ -18,12 +18,14 @@ data class PKCE (
         val pkce: PKCE
     )
 
-    fun generateData(challengeMethod: ChallengeMethod = ChallengeMethod.SHA_256): Data {
-        val codeVerifier = UUID.randomUUID().toString()
-        val nonce = CryptoUtils.createRandomKeyString()
-        val challenge = CryptoUtils.sha256(codeVerifier)
+    companion object {
+        fun generateData(challengeMethod: ChallengeMethod = ChallengeMethod.SHA_256): Data {
+            val codeVerifier = UUID.randomUUID().toString()
+            val nonce = CryptoUtils.createRandomKeyString()
+            val challenge = CryptoUtils.sha256(codeVerifier)
 
-        val pkce = PKCE(challenge = challenge, nonce = nonce, challengeMethod = challengeMethod)
-        return Data(verifier = codeVerifier, pkce = pkce)
+            val pkce = PKCE(challenge = challenge, nonce = nonce, challengeMethod = challengeMethod)
+            return Data(verifier = codeVerifier, pkce = pkce)
+        }
     }
 }
