@@ -7,6 +7,7 @@ import gr.indice.identity.apis.DevicesRepository
 import gr.indice.identity.apis.OpenIdApi
 import gr.indice.identity.apis.ThisDeviceRepository
 import gr.indice.identity.models.DeviceAuthentications
+import gr.indice.identity.models.extensions.AuthCodeGrant
 import gr.indice.identity.models.extensions.AuthRequest
 import gr.indice.identity.models.extensions.ClientCredentialsGrand
 import gr.indice.identity.models.extensions.DeviceAuthGrant
@@ -38,6 +39,9 @@ interface AuthorizationService {
     /** Try login using the device_authentication grant - using the fingerprint mode */
     @Throws(ServiceErrorException::class)
     suspend fun loginBiometric(signatureUnlock: suspend (Signature) -> Signature)
+    /** Try login using the AuthCode grant - using the PKCE mode */
+    @Throws(ServiceErrorException::class)
+    suspend fun loginWithCode(code: String, verifier: String)
     /** Try to refresh current token */
     @Throws(ServiceErrorException::class)
     suspend fun refreshToken()
@@ -86,6 +90,7 @@ internal class AuthorizationServiceImpl(
         }
     }
 
+
     override suspend fun loginBiometric(signatureUnlock: suspend (Signature) -> Signature) {
         val codeVerifier = CryptoUtils.createCodeVerifier()
         val verifierHash = CryptoUtils.sha256(codeVerifier)
@@ -125,6 +130,13 @@ internal class AuthorizationServiceImpl(
         }
     }
 
+    override suspend fun loginWithCode(code: String, verifier: String) =
+        login(AuthCodeGrant(
+            redirect_uri = client.urls.authorization.orEmpty(),
+            code = code,
+            code_verifier = verifier,
+            scope = client.scope,
+            client = client))
     override suspend fun refreshToken() {
         val refresh = tokenStorage.refreshToken ?: throw Exception("Unauthenticated")
         login(grand = RefreshTokenGrant(refreshToken = refresh.value, client = client))
