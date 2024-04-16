@@ -187,10 +187,10 @@ internal class AuthorizationServiceImpl(
     }
 
     override fun endSessionUrl(): Uri {
-        if (configuration.authorizationEndPoint.isEmpty())
-            throw Exception("Authorization endpoint url is invalid")
+        if (configuration.logoutEndpoint.isEmpty())
+            throw Exception("LogoutEndpoint endpoint url is invalid")
 
-        return Uri.parse(configuration.authorizationEndPoint)
+        return Uri.parse(configuration.logoutEndpoint)
             .buildUpon()
             .appendQueryParameter("id_token_hint", tokenStorage.idToken)
             .appendQueryParameter("post_logout_redirect_uri", client.urls.postLogout)
