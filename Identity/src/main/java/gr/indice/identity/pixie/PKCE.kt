@@ -20,7 +20,7 @@ data class PKCE (
 
     companion object {
         fun generateData(challengeMethod: ChallengeMethod = ChallengeMethod.SHA_256): Data {
-            val codeVerifier = UUID.randomUUID().toString()
+            val codeVerifier = CryptoUtils.createRandomKeyString(32)
             val nonce = CryptoUtils.createRandomKeyString()
             val challenge = CryptoUtils.sha256(codeVerifier)
 

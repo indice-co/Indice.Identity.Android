@@ -25,7 +25,7 @@ publishing {
             url = uri("https://maven.pkg.github.com/indice-co/Indice.Identity.Android")
             credentials {
                 val props = Properties()
-                if (file("config/github2.properties").exists()) {
+                if (file("config/github.properties").exists()) {
                     props.load(FileInputStream(file("config/github.properties")))
                 }
                 username = props.getProperty("GITHUB_USER_NAME") ?: ""
