@@ -211,6 +211,7 @@ internal class DevicesServiceImpl(
                     thisDeviceRepository.update(registrationId?.toString())
                     _hasDevicePin.value = true
                     encryptedStorage.storeBoolean(StorageKey.devicePinKey, true)
+                    deviceId?.let { updateDeviceWith(it) }
                 }
 
             }
@@ -272,6 +273,7 @@ internal class DevicesServiceImpl(
                         thisDeviceRepository.update(registrationId?.toString())
                         _hasFingerPrint.value = true
                         encryptedStorage.storeBoolean(StorageKey.hasFingerPrint, true)
+                        deviceId?.let { updateDeviceWith(it) }
                     }
 
             }
