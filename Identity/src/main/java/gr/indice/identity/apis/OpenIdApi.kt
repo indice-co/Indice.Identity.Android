@@ -12,7 +12,7 @@ interface OpenIdApi {
     @POST
     suspend fun authorize(
         @Url url: String,
-        @FieldMap params: Map<String, String>
+        @FieldMap params: Map<String, Any>
     ): Response<TokenResponse>
 
     @FormUrlEncoded
