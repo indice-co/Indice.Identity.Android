@@ -12,7 +12,9 @@ data class ProblemDetails(
     val code: String? = null,
     val errors: Map<String, List<String>>? = null,
     @Json(name = "error_description")
-    val errorDescription: String? = null
+    val errorDescription: String? = null,
+    @Json(name = "authorization_details")
+    val authorizationDetails: Any? = null
 )
 {
     val description : String get() {
