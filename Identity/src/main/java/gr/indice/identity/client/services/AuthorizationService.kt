@@ -11,6 +11,7 @@ import gr.indice.identity.models.extensions.AuthCodeGrant
 import gr.indice.identity.models.extensions.AuthRequest
 import gr.indice.identity.models.extensions.ClientCredentialsGrand
 import gr.indice.identity.models.extensions.DeviceAuthGrant
+import gr.indice.identity.models.extensions.DeviceAuthGrant.Info.*
 import gr.indice.identity.models.extensions.PasswordGrant
 import gr.indice.identity.models.extensions.RefreshTokenGrant
 import gr.indice.identity.models.extensions.biometricAuth
@@ -28,6 +29,11 @@ import java.security.Signature
 import java.util.concurrent.CancellationException
 
 interface AuthorizationService {
+    /**
+     * Create oAuth2Grand for biometric or pin. Also return the grand if need it.
+     */
+    suspend fun generateGrand(type: DeviceAuthGrant.Info): OAuth2Grant
+
     /** Try login with any grant */
     @Throws(ServiceErrorException::class)
     suspend fun login(grand: OAuth2Grant)
@@ -78,6 +84,53 @@ internal class AuthorizationServiceImpl(
     private val client: Client,
     private val configuration: IdentityConfig
 ): BaseService(), AuthorizationService {
+    override suspend fun generateGrand(type: DeviceAuthGrant.Info): OAuth2Grant {
+        return when(type) {
+            is Biometric -> {
+                val codeVerifier = CryptoUtils.createCodeVerifier()
+                val verifierHash = CryptoUtils.sha256(codeVerifier)
+
+                val authRequest = DeviceAuthentications.AuthorizationRequest.biometricAuth(
+                    codeChallenge = verifierHash, deviceIds = thisDeviceRepository.ids, client = client
+                )
+
+                val challenge = load { devicesRepository.authorize(authRequest = authRequest) }.challenge!!
+
+                try {
+                    val signature = CryptoUtils.getSignature()
+                    val key = CryptoUtils.getPrivateKey(CryptoUtils.KeyType.BIOMETRIC)
+                    signature.initSign(key)
+
+                    val signed = type.signatureUnlock(signature).run {
+                        update(challenge.toByteArray())
+                        sign().let { Base64.encodeToString(it, Base64.NO_WRAP) }
+                    }
+
+                    val public = CryptoUtils.getPemFromKey(CryptoUtils.KeyType.BIOMETRIC)
+
+                    DeviceAuthGrant.biometric(
+                        challenge = challenge,
+                        codeSignature = signed,
+                        verifier = codeVerifier,
+                        deviceIds = thisDeviceRepository.ids,
+                        publicKey = public,
+                        client = client)
+
+                } catch (e: Exception) {
+                    if (e is CancellationException) { // Canceled prompt by user
+                        throw e
+                    }
+                    deviceService.removeRegistrationFingerprint()
+                    throw e
+                }
+            }
+            is Pin -> {
+                val pinHash = CryptoUtils.createPinHash(type.value, thisDeviceRepository.ids.device)
+                DeviceAuthGrant.pin(pin = pinHash, deviceIds = thisDeviceRepository.ids, client = client)
+            }
+        }
+    }
+
     override suspend fun login(grand: OAuth2Grant) {
         val tokenResponse = load { authRepositoryRepository.authorize(grand) }
         tokenStorage.parse(tokenResponse)
@@ -89,8 +142,7 @@ internal class AuthorizationServiceImpl(
 
     override suspend fun login(pin: String) {
         try {
-            val pinHash = CryptoUtils.createPinHash(pin, thisDeviceRepository.ids.device)
-            login(DeviceAuthGrant.pin(pin = pinHash, deviceIds = thisDeviceRepository.ids, client = client))
+            login(generateGrand(type = Pin(pin)))
         } catch (e: Exception) {
             throw e
         }
@@ -98,35 +150,8 @@ internal class AuthorizationServiceImpl(
 
 
     override suspend fun loginBiometric(signatureUnlock: suspend (Signature) -> Signature) {
-        val codeVerifier = CryptoUtils.createCodeVerifier()
-        val verifierHash = CryptoUtils.sha256(codeVerifier)
-
-        val authRequest = DeviceAuthentications.AuthorizationRequest.biometricAuth(
-            codeChallenge = verifierHash, deviceIds = thisDeviceRepository.ids, client = client
-        )
-
-        val challenge = load { devicesRepository.authorize(authRequest = authRequest) }.challenge!!
-
         try {
-            val signature = CryptoUtils.getSignature()
-            val key = CryptoUtils.getPrivateKey(CryptoUtils.KeyType.BIOMETRIC)
-            signature.initSign(key)
-
-            val signed = signatureUnlock(signature).run {
-                update(challenge.toByteArray())
-                sign().let { Base64.encodeToString(it, Base64.NO_WRAP) }
-            }
-
-            val public = CryptoUtils.getPemFromKey(CryptoUtils.KeyType.BIOMETRIC)
-
-            login(grand = DeviceAuthGrant.biometric(
-                challenge = challenge,
-                codeSignature = signed,
-                verifier = codeVerifier,
-                deviceIds = thisDeviceRepository.ids,
-                publicKey = public,
-                client = client))
-
+            login(grand = generateGrand(Biometric(signatureUnlock)))
         } catch (e: Exception) {
             if (e is CancellationException) { // Canceled prompt by user
                 throw e
