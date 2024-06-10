@@ -2,10 +2,10 @@
 agp = "8.3.2"
 kotlin = "1.9.23"
 
-kotlinxCoroutinesCore = "1.7.3"
-loggingInterceptor = "5.0.0-alpha.2"
-moshiKotlin = "1.15.0"
-retrofit = "2.9.0"
+kotlinxCoroutinesCore = "1.8.0"
+loggingInterceptor = "5.0.0-alpha.14"
+moshiKotlin = "1.15.1"
+retrofit = "2.11.0"
 
 [libraries]
 converter-moshi = { module = "com.squareup.retrofit2:converter-moshi", version.ref = "retrofit" }

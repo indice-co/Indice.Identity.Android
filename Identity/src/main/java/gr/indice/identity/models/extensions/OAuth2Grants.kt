@@ -3,13 +3,14 @@ package gr.indice.identity.models.extensions
 import gr.indice.identity.apis.OpenIdApi
 import gr.indice.identity.apis.ThisDeviceIds
 import gr.indice.identity.protocols.Client
+import gr.indice.identity.protocols.OAuth2Grant
 
 
 private fun Map<String, String?>.filterNulls() =
     mapNotNull { it.value?.let { v -> it.key to v } }.toMap()
 
 
-data class ClientCredentialsGrand(val client: Client): OpenIdApi.OAuth2Grant {
+data class ClientCredentialsGrand(val client: Client): OAuth2Grant {
     override val grantType: String = "client_credentials"
     override val params:  Map<String, String> get() = mapOf(
         "grant_type" to grantType,
@@ -26,7 +27,7 @@ data class PasswordGrant(
     val password: String,
     val deviceId: String,
     val client: Client
-) : OpenIdApi.OAuth2Grant {
+) : OAuth2Grant {
     override val grantType = "password"
     override val params: Map<String, String> get() = mapOf(
         "grant_type" to grantType,
@@ -47,7 +48,7 @@ data class AuthCodeGrant(
     var code_verifier: String,
     val scope: String,
     val client: Client
-): OpenIdApi.OAuth2Grant {
+): OAuth2Grant {
     override val grantType: String = "authorization_code"
     override val params: Map<String, String> = mapOf(
         "grant_type" to grantType,
@@ -63,7 +64,7 @@ data class AuthCodeGrant(
 data class RefreshTokenGrant(
     val refreshToken: String?,
     val client: Client
-) : OpenIdApi.OAuth2Grant {
+) : OAuth2Grant {
     override val grantType = "refresh_token"
     override val params: Map<String, String> get() = mapOf(
         "grant_type" to grantType,
@@ -87,7 +88,7 @@ data class DeviceAuthGrant(
     val public_key: String?,
     val client_id: String?,
     val scope: String?,
-): OpenIdApi.OAuth2Grant {
+): OAuth2Grant {
     override val grantType = "device_authentication"
 
     override val params: Map<String, String> get() = mapOf(

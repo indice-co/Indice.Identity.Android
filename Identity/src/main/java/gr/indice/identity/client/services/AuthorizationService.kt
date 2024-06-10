@@ -4,9 +4,9 @@ import android.net.Uri
 import android.util.Base64
 import gr.indice.identity.apis.AuthRepositoryRepository
 import gr.indice.identity.apis.DevicesRepository
-import gr.indice.identity.apis.OpenIdApi
 import gr.indice.identity.apis.ThisDeviceRepository
 import gr.indice.identity.models.DeviceAuthentications
+import gr.indice.identity.models.TokenResponse
 import gr.indice.identity.models.extensions.AuthCodeGrant
 import gr.indice.identity.models.extensions.AuthRequest
 import gr.indice.identity.models.extensions.ClientCredentialsGrand
@@ -17,9 +17,10 @@ import gr.indice.identity.models.extensions.biometricAuth
 import gr.indice.identity.pixie.PKCE
 import gr.indice.identity.protocols.Client
 import gr.indice.identity.protocols.IdentityConfig
-import gr.indice.identity.protocols.IdentityEncryptedStorage
+import gr.indice.identity.protocols.OAuth2Grant
 import gr.indice.identity.protocols.TokenStorage
 import gr.indice.identity.protocols.basicAuth
+import gr.indice.identity.protocols.with
 import gr.indice.identity.utils.CryptoUtils
 import gr.indice.identity.utils.Serializer
 import gr.indice.identity.utils.ServiceErrorException
@@ -29,7 +30,7 @@ import java.util.concurrent.CancellationException
 interface AuthorizationService {
     /** Try login with any grant */
     @Throws(ServiceErrorException::class)
-    suspend fun login(grand: OpenIdApi.OAuth2Grant)
+    suspend fun login(grand: OAuth2Grant)
     /** Try login using the password grant */
     @Throws(ServiceErrorException::class)
     suspend fun login(userName: String, password: String)
@@ -42,6 +43,12 @@ interface AuthorizationService {
     /** Try login using the AuthCode grant - using the PKCE mode */
     @Throws(ServiceErrorException::class)
     suspend fun loginWithCode(code: String, verifier: String)
+
+    /**
+     * Custom authorization with authorizationDetails and custom grand
+     */
+    suspend fun tokenFor(authorizationDetails: Any, grand: OAuth2Grant): TokenResponse
+
     /** Try to refresh current token */
     @Throws(ServiceErrorException::class)
     suspend fun refreshToken()
@@ -66,13 +73,12 @@ internal class AuthorizationServiceImpl(
     private val authRepositoryRepository: AuthRepositoryRepository,
     private val devicesRepository: DevicesRepository,
     private val thisDeviceRepository: ThisDeviceRepository,
-    private val encryptedStorage: IdentityEncryptedStorage,
     private val deviceService: DevicesService,
     private val tokenStorage: TokenStorage,
     private val client: Client,
     private val configuration: IdentityConfig
 ): BaseService(), AuthorizationService {
-    override suspend fun login(grand: OpenIdApi.OAuth2Grant) {
+    override suspend fun login(grand: OAuth2Grant) {
         val tokenResponse = load { authRepositoryRepository.authorize(grand) }
         tokenStorage.parse(tokenResponse)
     }
@@ -137,6 +143,11 @@ internal class AuthorizationServiceImpl(
             code_verifier = verifier,
             scope = client.scope,
             client = client))
+
+    override suspend fun tokenFor(authorizationDetails: Any, grand: OAuth2Grant): TokenResponse {
+        return load { authRepositoryRepository.authorize(grand.with(authorizationDetails)) }
+    }
+
     override suspend fun refreshToken() {
         val refresh = tokenStorage.refreshToken ?: throw Exception("Unauthenticated")
         login(grand = RefreshTokenGrant(refreshToken = refresh.value, client = client))
