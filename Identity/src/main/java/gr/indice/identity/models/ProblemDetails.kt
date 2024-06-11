@@ -2,7 +2,6 @@ package gr.indice.identity.models
 
 import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
-import org.json.JSONObject
 
 @JsonClass(generateAdapter = true)
 data class ProblemDetails(
