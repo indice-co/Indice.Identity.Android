@@ -1,12 +1,14 @@
 package gr.indice.identity.protocols
 
+import com.google.gson.Gson
+
 interface OAuth2Grant {
     val params: Map<String, String>
     val grantType: String
 }
 
 fun OAuth2Grant.with(authorizationDetails: Any): OAuth2Grant {
-    val extras = "authorization_details" to authorizationDetails.toString()
+    val extras = "authorization_details" to Gson().toJson(authorizationDetails)
 
     return OAuthParamsWrapper(parent = this, extras = extras)
 }

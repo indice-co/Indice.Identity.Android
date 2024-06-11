@@ -77,4 +77,5 @@ dependencies {
     api(libs.moshi.kotlin)
 
     implementation(libs.kotlinx.coroutines.core)
+    implementation(libs.gson)
 }
