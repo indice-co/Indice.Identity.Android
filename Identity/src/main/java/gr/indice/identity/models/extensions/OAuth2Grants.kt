@@ -13,7 +13,7 @@ private fun Map<String, String?>.filterNulls() =
 
 data class ClientCredentialsGrand(val client: Client): OAuth2Grant {
     override val grantType: String = "client_credentials"
-    override val params:  Map<String, Any> get() = mapOf(
+    override val params:  Map<String, String> get() = mapOf(
         "grant_type" to grantType,
         "client_id" to client.id,
         "client_secret" to client.secret,
@@ -30,7 +30,7 @@ data class PasswordGrant(
     val client: Client
 ) : OAuth2Grant {
     override val grantType = "password"
-    override val params: Map<String, Any> get() = mapOf(
+    override val params: Map<String, String> get() = mapOf(
         "grant_type" to grantType,
         "client_id" to client.id,
         "client_secret" to client.secret,
@@ -51,7 +51,7 @@ data class AuthCodeGrant(
     val client: Client
 ): OAuth2Grant {
     override val grantType: String = "authorization_code"
-    override val params: Map<String, Any> = mapOf(
+    override val params: Map<String, String> = mapOf(
         "grant_type" to grantType,
         "client_id" to client.id,
         "client_secret" to client.secret,
@@ -67,7 +67,7 @@ data class RefreshTokenGrant(
     val client: Client
 ) : OAuth2Grant {
     override val grantType = "refresh_token"
-    override val params: Map<String, Any> get() = mapOf(
+    override val params: Map<String, String> get() = mapOf(
         "grant_type" to grantType,
         "refresh_token" to refreshToken,
         "client_id" to client.id,
@@ -98,7 +98,7 @@ data class DeviceAuthGrant(
 
     override val grantType = "device_authentication"
 
-    override val params: Map<String, Any> get() = mapOf(
+    override val params: Map<String, String> get() = mapOf(
         "grant_type" to grantType,
         "mode" to mode,
         "pin" to pin,

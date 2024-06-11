@@ -2,6 +2,7 @@ package gr.indice.identity.models
 
 import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
+import org.json.JSONObject
 
 @JsonClass(generateAdapter = true)
 data class ProblemDetails(
@@ -14,7 +15,7 @@ data class ProblemDetails(
     @Json(name = "error_description")
     val errorDescription: String? = null,
     @Json(name = "authorization_details")
-    val authorizationDetails: Any? = null
+    val authorizationDetails: JSONObject? = null
 )
 {
     val description : String get() {
