@@ -2,10 +2,12 @@ package gr.indice.identity.client.services
 
 import android.net.Uri
 import android.util.Base64
+import gr.indice.identity.adapters.toType
 import gr.indice.identity.apis.AuthRepositoryRepository
 import gr.indice.identity.apis.DevicesRepository
 import gr.indice.identity.apis.ThisDeviceRepository
 import gr.indice.identity.models.DeviceAuthentications
+import gr.indice.identity.models.ProblemDetails
 import gr.indice.identity.models.TokenResponse
 import gr.indice.identity.models.extensions.AuthCodeGrant
 import gr.indice.identity.models.extensions.AuthRequest
@@ -87,16 +89,15 @@ internal class AuthorizationServiceImpl(
     override suspend fun generateGrand(type: DeviceAuthGrant.Info): OAuth2Grant {
         return when(type) {
             is Biometric -> {
-                val codeVerifier = CryptoUtils.createCodeVerifier()
-                val verifierHash = CryptoUtils.sha256(codeVerifier)
-
-                val authRequest = DeviceAuthentications.AuthorizationRequest.biometricAuth(
-                    codeChallenge = verifierHash, deviceIds = thisDeviceRepository.ids, client = client
-                )
-
-                val challenge = load { devicesRepository.authorize(authRequest = authRequest) }.challenge!!
-
                 try {
+                    val codeVerifier = CryptoUtils.createCodeVerifier()
+                    val verifierHash = CryptoUtils.sha256(codeVerifier)
+
+                    val authRequest = DeviceAuthentications.AuthorizationRequest.biometricAuth(
+                        codeChallenge = verifierHash, deviceIds = thisDeviceRepository.ids, client = client
+                    )
+
+                    val challenge = load { devicesRepository.authorize(authRequest = authRequest) }.challenge!!
                     val signature = CryptoUtils.getSignature()
                     val key = CryptoUtils.getPrivateKey(CryptoUtils.KeyType.BIOMETRIC)
                     signature.initSign(key)
@@ -117,10 +118,15 @@ internal class AuthorizationServiceImpl(
                         client = client)
 
                 } catch (e: Exception) {
-                    if (e is CancellationException) { // Canceled prompt by user
-                        throw e
+                    if (e is ServiceErrorException) {
+                        e.error.toType(ProblemDetails::class.java)?.let { error ->
+                            if (error.detail == "Device is unknown" || error.title == "invalid_request") {
+                                deviceService.removeRegistrationFingerprint()
+                                //If device doesn't exist or is invalid request clear also pin registration
+                                deviceService.removeRegistrationDevicePin()
+                            }
+                        }
                     }
-                    deviceService.removeRegistrationFingerprint()
                     throw e
                 }
             }
