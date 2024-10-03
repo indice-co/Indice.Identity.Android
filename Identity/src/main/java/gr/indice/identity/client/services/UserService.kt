@@ -12,6 +12,7 @@ interface UserService {
     val userInfo: StateFlow<UserInfo?>
     @Throws(ServiceErrorException::class)
     suspend fun refreshUserInfo()
+    fun clearUserInfo()
 }
 
 internal class UserServiceImpl(private val userInfoRepository: UserInfoRepository): BaseService(), UserService {
@@ -20,6 +21,10 @@ internal class UserServiceImpl(private val userInfoRepository: UserInfoRepositor
 
     override suspend fun refreshUserInfo() {
         _userInfo.value = load { userInfoRepository.getUserInfo() }
+    }
+
+    override fun clearUserInfo() {
+        _userInfo.value = null
     }
 
 }
