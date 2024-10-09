@@ -98,9 +98,9 @@ interface DevicesService {
     @Throws(ServiceErrorException::class)
     suspend fun registerDeviceFingerprint(signatureUnlock: suspend (Signature) -> Signature) : suspend (CallbackType.OtpResult) -> Unit
     /** Remove a device pin registration */
-    suspend fun removeRegistrationDevicePin()
+    fun removeRegistrationDevicePin()
     /** Remove a fingerprint registration */
-    suspend fun removeRegistrationFingerprint()
+    fun removeRegistrationFingerprint()
     /** Trigger enable current device's trust status */
     @Throws(ServiceErrorException::class)
     suspend fun enableDeviceTrust(deviceSelection: DeviceSelection)
@@ -289,13 +289,13 @@ internal class DevicesServiceImpl(
         }
     }
 
-    override suspend fun removeRegistrationDevicePin() {
+    override fun removeRegistrationDevicePin() {
         CryptoUtils.deleteKeyPair(CryptoUtils.KeyType.PIN)
         encryptedStorage.storeBoolean(StorageKey.devicePinKey, false)
         _hasDevicePin.value = false
     }
 
-    override suspend fun removeRegistrationFingerprint() {
+    override fun removeRegistrationFingerprint() {
         CryptoUtils.deleteKeyPair(CryptoUtils.KeyType.BIOMETRIC)
         encryptedStorage.storeBoolean(StorageKey.hasFingerPrint, false)
         _hasFingerPrint.value = false
