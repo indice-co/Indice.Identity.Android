@@ -7,6 +7,7 @@ import gr.indice.identity.apis.ThisDeviceRepository
 import gr.indice.identity.client.IdentityClientOptions
 import gr.indice.identity.models.CreateDeviceRequest
 import gr.indice.identity.models.DeviceAuthentications
+import gr.indice.identity.models.DeviceClientType
 import gr.indice.identity.models.DeviceInfo
 import gr.indice.identity.models.UpdateDeviceRequest
 import gr.indice.identity.models.extensions.biometric
@@ -310,7 +311,7 @@ internal class DevicesServiceImpl(
 
         val devices = (devicesInfo.userDevices.value ?: emptyList()).filter { it.deviceId != ids.device }
 
-        val currentTrustedCount = devices.count { it.isTrusted == true }
+        val currentTrustedCount = devices.count { it.isTrusted == true && it.clientType != DeviceClientType.BROWSER }
 
         val swapDeviceId = if (currentTrustedCount >= identityOptions.maxTrustedDevicesCount) {
             when(val selection = deviceSelection(devices)) {
