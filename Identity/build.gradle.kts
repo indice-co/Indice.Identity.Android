@@ -37,7 +37,7 @@ publishing {
 
 android {
     namespace = "gr.indice.identity"
-    compileSdk = 34
+    compileSdk = 36
 
     defaultConfig {
         minSdk = 26

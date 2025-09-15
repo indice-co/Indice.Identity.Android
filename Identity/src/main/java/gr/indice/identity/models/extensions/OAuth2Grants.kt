@@ -4,6 +4,7 @@ import gr.indice.identity.apis.OpenIdApi
 import gr.indice.identity.apis.ThisDeviceIds
 import gr.indice.identity.protocols.Client
 import gr.indice.identity.protocols.OAuth2Grant
+import java.net.URLEncoder
 import java.security.Signature
 
 
@@ -39,6 +40,9 @@ data class PasswordGrant(
         "password" to password,
         "device_id" to deviceId
     ).filterNulls()
+        .mapValues { entry ->
+            URLEncoder.encode(entry.value,"UTF-8")
+        }
 }
 //endregion Password grant
 
