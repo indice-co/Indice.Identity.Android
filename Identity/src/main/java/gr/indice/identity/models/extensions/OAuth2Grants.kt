@@ -40,9 +40,10 @@ data class PasswordGrant(
         "password" to password,
         "device_id" to deviceId
     ).filterNulls()
-        .mapValues { entry ->
-            URLEncoder.encode(entry.value,"UTF-8")
-        }
+        //Comment this because converts the scopes to urlEncode -> invalid_scope replaces the + with %2B
+        //.mapValues { entry ->
+        //    URLEncoder.encode(entry.value,"UTF-8")
+        //}
 }
 //endregion Password grant
 
