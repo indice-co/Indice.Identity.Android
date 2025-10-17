@@ -50,6 +50,9 @@ interface DevicesService {
 
     val devicesInfo: DeviceData
     val quickLoginStatus: QuickLoginStatus
+
+    val registrationId: String?
+
     @Throws(ServiceErrorException::class)
     suspend fun refreshDevices()
     /** Register or update an existing registration of the current device. */
@@ -117,6 +120,10 @@ internal class DevicesServiceImpl(
     private val encryptedStorage: IdentityEncryptedStorage,
     private val client: Client
 ) : BaseService(), DevicesService {
+
+    override val registrationId: String?
+        get() = thisDeviceRepository.ids.registration
+
 
     private val _userDevices = MutableStateFlow<List<DeviceInfo>?>(emptyList())
     private val _deviceId = MutableStateFlow(thisDeviceRepository.ids.device)

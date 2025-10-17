@@ -1,6 +1,7 @@
 package gr.indice.identity.client.services
 
 import android.net.Uri
+import android.provider.SyncStateContract.Helpers.update
 import android.util.Base64
 import gr.indice.identity.adapters.toType
 import gr.indice.identity.apis.AuthRepositoryRepository
@@ -31,10 +32,13 @@ import java.security.Signature
 import java.util.concurrent.CancellationException
 
 interface AuthorizationService {
+    class BiometricSecurityContextMissing: Exception("Biometric security context available only after successful biometricLogin")
+
+
     /**
      * Create oAuth2Grand for biometric or pin. Also return the grand if need it.
      */
-    suspend fun generateGrand(type: DeviceAuthGrant.Info): OAuth2Grant
+    suspend fun generateGrand(type: DeviceAuthGrant.Info): SecurityData
 
     /** Try login with any grant */
     @Throws(ServiceErrorException::class)
@@ -75,6 +79,14 @@ interface AuthorizationService {
     /** Generate the url used to end a user's session  */
     fun endSessionUrl(): Uri
 
+    @Throws(BiometricSecurityContextMissing::class)
+    fun signWithBiometricSecurityContext(data: ByteArray): ByteArray
+
+    data class SecurityData(
+        val grant: OAuth2Grant,
+        internal val privateKey: Signature?
+    )
+
 }
 
 internal class AuthorizationServiceImpl(
@@ -86,7 +98,10 @@ internal class AuthorizationServiceImpl(
     private val client: Client,
     private val configuration: IdentityConfig
 ): BaseService(), AuthorizationService {
-    override suspend fun generateGrand(type: DeviceAuthGrant.Info): OAuth2Grant {
+
+    private var securityData: AuthorizationService.SecurityData? = null
+
+    override suspend fun generateGrand(type: DeviceAuthGrant.Info): AuthorizationService.SecurityData {
         return when(type) {
             is Biometric -> {
                 try {
@@ -101,21 +116,25 @@ internal class AuthorizationServiceImpl(
                     val signature = CryptoUtils.getSignature()
                     val key = CryptoUtils.getPrivateKey(CryptoUtils.KeyType.BIOMETRIC)
                     signature.initSign(key)
+                    val unlockedSignature = type.signatureUnlock(signature)
 
-                    val signed = type.signatureUnlock(signature).run {
+                    val signed = unlockedSignature.run {
                         update(challenge.toByteArray())
                         sign().let { Base64.encodeToString(it, Base64.NO_WRAP) }
                     }
 
                     val public = CryptoUtils.getPemFromKey(CryptoUtils.KeyType.BIOMETRIC)
 
-                    DeviceAuthGrant.biometric(
-                        challenge = challenge,
-                        codeSignature = signed,
-                        verifier = codeVerifier,
-                        deviceIds = thisDeviceRepository.ids,
-                        publicKey = public,
-                        client = client)
+                    AuthorizationService.SecurityData(
+                        DeviceAuthGrant.biometric(
+                            challenge = challenge,
+                            codeSignature = signed,
+                            verifier = codeVerifier,
+                            deviceIds = thisDeviceRepository.ids,
+                            publicKey = public,
+                            client = client
+                        ), unlockedSignature
+                    )
 
                 } catch (e: Exception) {
                     if (e is ServiceErrorException) {
@@ -132,7 +151,7 @@ internal class AuthorizationServiceImpl(
             }
             is Pin -> {
                 val pinHash = CryptoUtils.createPinHash(type.value, thisDeviceRepository.ids.device)
-                DeviceAuthGrant.pin(pin = pinHash, deviceIds = thisDeviceRepository.ids, client = client)
+                AuthorizationService.SecurityData(DeviceAuthGrant.pin(pin = pinHash, deviceIds = thisDeviceRepository.ids, client = client), null)
             }
         }
     }
@@ -148,7 +167,7 @@ internal class AuthorizationServiceImpl(
 
     override suspend fun login(pin: String) {
         try {
-            login(generateGrand(type = Pin(pin)))
+            login(generateGrand(type = Pin(pin)).grant)
         } catch (e: Exception) {
             throw e
         }
@@ -157,8 +176,12 @@ internal class AuthorizationServiceImpl(
 
     override suspend fun loginBiometric(signatureUnlock: suspend (Signature) -> Signature) {
         try {
-            login(grand = generateGrand(Biometric(signatureUnlock)))
+            val securityData = generateGrand(Biometric(signatureUnlock))
+            this.securityData = securityData
+
+            login(grand = securityData.grant)
         } catch (e: Exception) {
+            this.securityData = null
             if (e is CancellationException) { // Canceled prompt by user
                 throw e
             }
@@ -237,6 +260,13 @@ internal class AuthorizationServiceImpl(
             .appendQueryParameter("id_token_hint", tokenStorage.idToken)
             .appendQueryParameter("post_logout_redirect_uri", client.urls.postLogout)
             .build()
+    }
+
+    override fun signWithBiometricSecurityContext(data: ByteArray): ByteArray {
+        return securityData?.privateKey?.run {
+            update(data)
+            sign()
+        } ?: throw AuthorizationService.BiometricSecurityContextMissing()
     }
 
 }
