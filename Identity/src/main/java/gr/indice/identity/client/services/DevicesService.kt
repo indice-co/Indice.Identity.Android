@@ -355,7 +355,9 @@ internal class DevicesServiceImpl(
     private suspend fun updateDeviceWith(deviceId: String) {
         val newDevice = load { devicesRepository.device(deviceId) }
         val deviceList = (_userDevices.value ?: emptyList()).toMutableList()
-        val devIndex = _userDevices.value?.indexOfFirst { it.deviceId == newDevice.deviceId }
+        val devIndex = _userDevices.value
+            ?.indexOfFirst { it.deviceId == newDevice.deviceId }
+            ?.takeIf { it >= 0 } // valid index..
 
         devIndex?.let {
             deviceList[it] = newDevice
