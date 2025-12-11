@@ -1,5 +1,7 @@
 package gr.indice.identity.utils
 
+import com.squareup.moshi.FromJson
+import com.squareup.moshi.JsonReader
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import gr.indice.identity.adapters.OffsetDateTimeAdapter
@@ -12,6 +14,7 @@ object Serializer {
         .add(KotlinJsonAdapterFactory())
         .add(OffsetDateTimeAdapter())
         .add(UUIDAdapter())
+        .add(IntOrDoubleAdapter())
         // .add(OffsetDateTimeAdapter())
         // .add(LocalDateTimeAdapter())
         // .add(LocalDateAdapter())
@@ -47,6 +50,14 @@ object Serializer {
     inline fun <reified T> toMap(obj: T) : Map<String, Any>? {
         return toJson(obj)?.let { json ->
             fromJson(json)
+        }
+    }
+
+    class IntOrDoubleAdapter {
+        @FromJson
+        fun fromJson(reader: JsonReader): Number {
+            val num = reader.nextDouble()
+            return if (num % 1 == 0.0) num.toInt() else num
         }
     }
 }
