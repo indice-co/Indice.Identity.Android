@@ -1,8 +1,6 @@
 package gr.indice.identity.protocols
 
-import com.google.gson.Gson
-import com.google.gson.GsonBuilder
-import com.google.gson.ToNumberPolicy
+import gr.indice.identity.utils.Serializer
 
 interface OAuth2Grant {
     val params: Map<String, String>
@@ -10,10 +8,10 @@ interface OAuth2Grant {
 }
 
 fun OAuth2Grant.with(authorizationDetails: Any): OAuth2Grant {
-    val extras = "authorization_details" to GsonBuilder()
-        .setObjectToNumberStrategy(ToNumberPolicy.LONG_OR_DOUBLE)
-        .create()
-        .toJson(authorizationDetails)
+
+    Serializer.moshi.adapter(Any::class.java).run { toJson(authorizationDetails) }
+
+    val extras = "authorization_details" to Serializer.moshi.adapter(Any::class.java).run { toJson(authorizationDetails) }
     //Gson().toJson(authorizationDetails)
     return OAuthParamsWrapper(parent = this, extras = extras)
 }
