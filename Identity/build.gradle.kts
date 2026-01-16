@@ -12,7 +12,7 @@ publishing {
         register<MavenPublication>("release") {
             groupId = "gr.indice"
             artifactId = "identity"
-            version = "0.0.1"
+            version = "0.0.2"
 
             afterEvaluate {
                 from(components["release"])
@@ -37,7 +37,7 @@ publishing {
 
 android {
     namespace = "gr.indice.identity"
-    compileSdk = 34
+    compileSdk = 36
 
     defaultConfig {
         minSdk = 26
@@ -77,4 +77,5 @@ dependencies {
     api(libs.moshi.kotlin)
 
     implementation(libs.kotlinx.coroutines.core)
+    implementation(libs.gson)
 }

@@ -7,6 +7,7 @@ import gr.indice.identity.apis.ThisDeviceRepository
 import gr.indice.identity.client.IdentityClientOptions
 import gr.indice.identity.models.CreateDeviceRequest
 import gr.indice.identity.models.DeviceAuthentications
+import gr.indice.identity.models.DeviceClientType
 import gr.indice.identity.models.DeviceInfo
 import gr.indice.identity.models.UpdateDeviceRequest
 import gr.indice.identity.models.extensions.biometric
@@ -98,9 +99,9 @@ interface DevicesService {
     @Throws(ServiceErrorException::class)
     suspend fun registerDeviceFingerprint(signatureUnlock: suspend (Signature) -> Signature) : suspend (CallbackType.OtpResult) -> Unit
     /** Remove a device pin registration */
-    suspend fun removeRegistrationDevicePin()
+    fun removeRegistrationDevicePin()
     /** Remove a fingerprint registration */
-    suspend fun removeRegistrationFingerprint()
+    fun removeRegistrationFingerprint()
     /** Trigger enable current device's trust status */
     @Throws(ServiceErrorException::class)
     suspend fun enableDeviceTrust(deviceSelection: DeviceSelection)
@@ -289,13 +290,13 @@ internal class DevicesServiceImpl(
         }
     }
 
-    override suspend fun removeRegistrationDevicePin() {
+    override fun removeRegistrationDevicePin() {
         CryptoUtils.deleteKeyPair(CryptoUtils.KeyType.PIN)
         encryptedStorage.storeBoolean(StorageKey.devicePinKey, false)
         _hasDevicePin.value = false
     }
 
-    override suspend fun removeRegistrationFingerprint() {
+    override fun removeRegistrationFingerprint() {
         CryptoUtils.deleteKeyPair(CryptoUtils.KeyType.BIOMETRIC)
         encryptedStorage.storeBoolean(StorageKey.hasFingerPrint, false)
         _hasFingerPrint.value = false
@@ -310,7 +311,7 @@ internal class DevicesServiceImpl(
 
         val devices = (devicesInfo.userDevices.value ?: emptyList()).filter { it.deviceId != ids.device }
 
-        val currentTrustedCount = devices.count { it.isTrusted == true }
+        val currentTrustedCount = devices.count { it.isTrusted == true && it.clientType != DeviceClientType.BROWSER }
 
         val swapDeviceId = if (currentTrustedCount >= identityOptions.maxTrustedDevicesCount) {
             when(val selection = deviceSelection(devices)) {
