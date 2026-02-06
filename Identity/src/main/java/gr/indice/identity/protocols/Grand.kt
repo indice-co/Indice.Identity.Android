@@ -7,16 +7,12 @@ interface OAuth2Grant {
     val grantType: String
 }
 
-fun OAuth2Grant.with(authorizationDetails: Any): OAuth2Grant {
-
-    Serializer.moshi.adapter(Any::class.java).run { toJson(authorizationDetails) }
-
-    val extras = "authorization_details" to Serializer.moshi.adapter(Any::class.java).run { toJson(authorizationDetails) }
-    //Gson().toJson(authorizationDetails)
+fun OAuth2Grant.with(authorizationDetails: String): OAuth2Grant {
+    val extras = "authorization_details" to authorizationDetails
     return OAuthParamsWrapper(parent = this, extras = extras)
 }
 
-private class OAuthParamsWrapper(private val parent: OAuth2Grant, private val extras: Pair<String, String>): OAuth2Grant {
+class OAuthParamsWrapper(private val parent: OAuth2Grant, private val extras: Pair<String, String>): OAuth2Grant {
     override val params: Map<String, String>
         get() = parent.params + mapOf(extras)
     override val grantType get() = parent.grantType

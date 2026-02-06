@@ -18,7 +18,7 @@ object Serializer {
 
     @JvmStatic
     val moshiBuilder: Moshi.Builder = Moshi.Builder()
-        .add(SmartAnyAdapterFactory())
+        //.add(SmartAnyAdapterFactory())
         .add(KotlinJsonAdapterFactory())
         .add(OffsetDateTimeAdapter())
         .add(UUIDAdapter())
@@ -133,10 +133,10 @@ object Serializer {
             val dec = BigDecimal(raw)
 
             return try {
-                dec.intValueExact()
+                dec.longValueExact()
             } catch (_: Exception) {
                 try {
-                    dec.longValueExact()
+                    dec.intValueExact()
                 } catch (_: Exception) {
                     if (dec.scale() == 0) dec
                     else dec

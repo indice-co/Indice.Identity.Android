@@ -1,8 +1,9 @@
 package gr.indice.identity.client.services
 
 import android.net.Uri
-import android.provider.SyncStateContract.Helpers.update
 import android.util.Base64
+import gr.indice.identity.adapters.RawJSONExtractor
+import gr.indice.identity.adapters.extractRawJsonValue
 import gr.indice.identity.adapters.toType
 import gr.indice.identity.apis.AuthRepositoryRepository
 import gr.indice.identity.apis.DevicesRepository
@@ -28,10 +29,15 @@ import gr.indice.identity.protocols.with
 import gr.indice.identity.utils.CryptoUtils
 import gr.indice.identity.utils.Serializer
 import gr.indice.identity.utils.ServiceErrorException
+import okhttp3.ResponseBody
 import java.security.Signature
 import java.util.concurrent.CancellationException
 
 interface AuthorizationService {
+
+    data class AuthorizationDetails(
+        internal val value: ResponseBody
+    )
     class BiometricSecurityContextMissing: Exception("Biometric security context available only after successful biometricLogin")
 
 
@@ -59,7 +65,7 @@ interface AuthorizationService {
     /**
      * Custom authorization with authorizationDetails and custom grand
      */
-    suspend fun tokenFor(authorizationDetails: Any, grand: OAuth2Grant): TokenResponse
+    suspend fun tokenFor(details: AuthorizationDetails, grand: OAuth2Grant): TokenResponse
 
     /** Try to refresh current token */
     @Throws(ServiceErrorException::class)
@@ -198,8 +204,9 @@ internal class AuthorizationServiceImpl(
             scope = client.scope,
             client = client))
 
-    override suspend fun tokenFor(authorizationDetails: Any, grand: OAuth2Grant): TokenResponse {
-        return load { authRepositoryRepository.authorize(grand.with(authorizationDetails)) }
+    override suspend fun tokenFor(details: AuthorizationService.AuthorizationDetails, grand: OAuth2Grant): TokenResponse {
+        val details = details.value.extractRawJsonValue("authorization_details")
+        return load { authRepositoryRepository.authorize(grand.with(details.toString(Charsets.UTF_8))) }
     }
 
     override suspend fun refreshToken() {
