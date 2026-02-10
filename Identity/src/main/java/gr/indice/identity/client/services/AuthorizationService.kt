@@ -3,6 +3,7 @@ package gr.indice.identity.client.services
 import android.net.Uri
 import android.util.Base64
 import gr.indice.identity.adapters.RawJSONExtractor
+import gr.indice.identity.adapters.RawJSONExtractorError
 import gr.indice.identity.adapters.extractRawJsonValue
 import gr.indice.identity.adapters.toType
 import gr.indice.identity.apis.AuthRepositoryRepository
@@ -35,7 +36,7 @@ import java.util.concurrent.CancellationException
 
 interface AuthorizationService {
 
-    data class AuthorizationDetails(
+    class AuthorizationDetails(
         internal val value: ResponseBody
     )
     class BiometricSecurityContextMissing: Exception("Biometric security context available only after successful biometricLogin")
@@ -65,6 +66,7 @@ interface AuthorizationService {
     /**
      * Custom authorization with authorizationDetails and custom grand
      */
+    @Throws(RawJSONExtractorError::class)
     suspend fun tokenFor(details: AuthorizationDetails, grand: OAuth2Grant): TokenResponse
 
     /** Try to refresh current token */
