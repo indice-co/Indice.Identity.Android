@@ -37,8 +37,11 @@ import java.util.concurrent.CancellationException
 interface AuthorizationService {
 
     class AuthorizationDetails(
+        val key: String = "authorization_details",
         internal val value: ResponseBody
-    )
+    ) {
+        internal var data: ByteArray = value.extractRawJsonValue(key)
+    }
     class BiometricSecurityContextMissing: Exception("Biometric security context available only after successful biometricLogin")
 
 
@@ -207,8 +210,7 @@ internal class AuthorizationServiceImpl(
             client = client))
 
     override suspend fun tokenFor(details: AuthorizationService.AuthorizationDetails, grand: OAuth2Grant): TokenResponse {
-        val details = details.value.extractRawJsonValue("authorization_details")
-        return load { authRepositoryRepository.authorize(grand.with(details.toString(Charsets.UTF_8))) }
+        return load { authRepositoryRepository.authorize(grand.with(details.data.toString(Charsets.UTF_8))) }
     }
 
     override suspend fun refreshToken() {
