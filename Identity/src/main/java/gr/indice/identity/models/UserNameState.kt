@@ -1,7 +1,7 @@
 package gr.indice.identity.models
 
 enum class UserNameStatus {
-    Available, Unavailable
+    Available, Unavailable, Failed
 }
 
 data class UsernameAvailability(
