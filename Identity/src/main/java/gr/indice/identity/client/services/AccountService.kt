@@ -19,6 +19,9 @@ interface AccountService {
     /** Update  the user's current email */
     @Throws(ServiceErrorException::class)
     suspend fun updateEmail(email: String)
+    /** Confirm the user's current email */
+    @Throws(ServiceErrorException::class)
+    suspend fun confirmEmail(token: String)
     /** Update the user's current password */
     @Throws(ServiceErrorException::class)
     suspend fun updatePassword(password: UpdatePasswordRequest)
@@ -51,6 +54,9 @@ internal class AccountServiceImpl(
     override suspend fun updateEmail(email: String) =
         load { accountRepository.update(UpdateEmailRequest(email = email, returnUrl = null)) }
 
+    override suspend fun confirmEmail(token: String) {
+        load { accountRepository.verifyEmail(OtpTokenRequest(token)) }
+    }
 
     override suspend fun updatePassword(password: UpdatePasswordRequest) = load { accountRepository.update(password) }
 

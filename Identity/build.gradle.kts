@@ -1,3 +1,4 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import java.io.FileInputStream
 import java.util.Properties
 
@@ -12,7 +13,7 @@ publishing {
         register<MavenPublication>("release") {
             groupId = "gr.indice"
             artifactId = "identity"
-            version = "0.0.1"
+            version = "1.0.0"
 
             afterEvaluate {
                 from(components["release"])
@@ -37,7 +38,7 @@ publishing {
 
 android {
     namespace = "gr.indice.identity"
-    compileSdk = 34
+    compileSdk = 36
 
     defaultConfig {
         minSdk = 26
@@ -60,9 +61,13 @@ android {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
-    kotlinOptions {
-        jvmTarget = "17"
+
+    kotlin {
+        compilerOptions {
+            jvmTarget = JvmTarget.JVM_17
+        }
     }
+
     publishing {
         singleVariant("release") {
             withJavadocJar()
@@ -77,4 +82,5 @@ dependencies {
     api(libs.moshi.kotlin)
 
     implementation(libs.kotlinx.coroutines.core)
+    implementation(libs.gson)
 }

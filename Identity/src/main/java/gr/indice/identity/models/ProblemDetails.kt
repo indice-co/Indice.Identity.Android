@@ -14,7 +14,8 @@ data class ProblemDetails(
     @Json(name = "error_description")
     val errorDescription: String? = null,
     @Json(name = "authorization_details")
-    val authorizationDetails: Any? = null
+    val authorizationDetails: Any? = null,
+    val requiresOtp: Boolean? = null
 )
 {
     val description : String get() {
