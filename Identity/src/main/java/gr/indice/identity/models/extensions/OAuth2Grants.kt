@@ -3,13 +3,16 @@ package gr.indice.identity.models.extensions
 import gr.indice.identity.apis.OpenIdApi
 import gr.indice.identity.apis.ThisDeviceIds
 import gr.indice.identity.protocols.Client
+import gr.indice.identity.protocols.OAuth2Grant
+import java.net.URLEncoder
+import java.security.Signature
 
 
 private fun Map<String, String?>.filterNulls() =
     mapNotNull { it.value?.let { v -> it.key to v } }.toMap()
 
 
-data class ClientCredentialsGrand(val client: Client): OpenIdApi.OAuth2Grant {
+data class ClientCredentialsGrand(val client: Client): OAuth2Grant {
     override val grantType: String = "client_credentials"
     override val params:  Map<String, String> get() = mapOf(
         "grant_type" to grantType,
@@ -26,7 +29,7 @@ data class PasswordGrant(
     val password: String,
     val deviceId: String,
     val client: Client
-) : OpenIdApi.OAuth2Grant {
+) : OAuth2Grant {
     override val grantType = "password"
     override val params: Map<String, String> get() = mapOf(
         "grant_type" to grantType,
@@ -37,6 +40,10 @@ data class PasswordGrant(
         "password" to password,
         "device_id" to deviceId
     ).filterNulls()
+        //Comment this because converts the scopes to urlEncode -> invalid_scope replaces the + with %2B
+        //.mapValues { entry ->
+        //    URLEncoder.encode(entry.value,"UTF-8")
+        //}
 }
 //endregion Password grant
 
@@ -47,7 +54,7 @@ data class AuthCodeGrant(
     var code_verifier: String,
     val scope: String,
     val client: Client
-): OpenIdApi.OAuth2Grant {
+): OAuth2Grant {
     override val grantType: String = "authorization_code"
     override val params: Map<String, String> = mapOf(
         "grant_type" to grantType,
@@ -63,7 +70,7 @@ data class AuthCodeGrant(
 data class RefreshTokenGrant(
     val refreshToken: String?,
     val client: Client
-) : OpenIdApi.OAuth2Grant {
+) : OAuth2Grant {
     override val grantType = "refresh_token"
     override val params: Map<String, String> get() = mapOf(
         "grant_type" to grantType,
@@ -87,7 +94,13 @@ data class DeviceAuthGrant(
     val public_key: String?,
     val client_id: String?,
     val scope: String?,
-): OpenIdApi.OAuth2Grant {
+): OAuth2Grant {
+
+    sealed interface Info {
+        data class Biometric(val signatureUnlock: suspend (Signature) -> Signature): Info
+        data class Pin(val value: String): Info
+    }
+
     override val grantType = "device_authentication"
 
     override val params: Map<String, String> get() = mapOf(

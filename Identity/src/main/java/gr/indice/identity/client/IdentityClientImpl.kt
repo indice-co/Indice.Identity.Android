@@ -39,7 +39,6 @@ class IdentityClientImpl(
         devicesRepository = repositories.deviceRepository,
         thisDeviceRepository = repositories.thisDeviceRepository,
         deviceService = devicesService,
-        encryptedStorage = encryptedStorage,
         tokenStorage = tokenStorage,
         client = client,
         configuration = configuration

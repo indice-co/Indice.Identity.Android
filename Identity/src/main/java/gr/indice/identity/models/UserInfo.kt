@@ -19,5 +19,6 @@ data class UserInfo(
     val email_verified: Boolean?,
     val phone_number: String?,
     val phone_number_verified: Boolean?,
-    val max_devices_count: String?
+    val max_devices_count: String?,
+    val password_expired: Boolean?
 )

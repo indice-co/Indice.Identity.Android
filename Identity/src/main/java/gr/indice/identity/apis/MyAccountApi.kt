@@ -91,8 +91,17 @@ suspend fun MyAccountApi.usernameIsAvailable(
     url: String,
     userName: ValidateUserNameRequest? = null
 ):Response<UsernameAvailability> {
-    return when (checkUserNameExists(url, userName).code()) {
+    val response = checkUserNameExists(url, userName)
+    return when (response.code()) {
         404 -> Response.success(UsernameAvailability(UserNameStatus.Available))
-        else -> Response.success(UsernameAvailability(UserNameStatus.Unavailable))
+        204 -> Response.success(UsernameAvailability(UserNameStatus.Unavailable))
+        else -> {
+            val errorBody = response.errorBody()
+            if (errorBody != null) {
+                Response.error(response.code(), errorBody)
+            } else {
+                Response.success(UsernameAvailability(UserNameStatus.Failed))
+            }
+        }
     }
 }

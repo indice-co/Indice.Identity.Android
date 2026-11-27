@@ -8,11 +8,6 @@ import retrofit2.http.*
 
 interface OpenIdApi {
 
-    interface OAuth2Grant {
-        val params: Map<String, String>
-        val grantType: String
-    }
-
     @FormUrlEncoded
     @POST
     suspend fun authorize(
